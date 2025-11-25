@@ -3,22 +3,18 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession } from "@/lib/auth-client"
 import {
-  IconCamera,
-  IconChartBar,
+  IconArrowsExchange2,
+  IconChartPie,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
+  IconFileDollar,
   IconHelp,
-  IconListDetails,
-  IconReport,
+  IconNews,
+  IconReportAnalytics,
   IconSearch,
   IconSettings,
-  IconUsers,
+  IconTargetArrow,
+  IconWallet,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -43,69 +39,69 @@ const staticData = {
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Dompet",
+      url: "/dashboard#wallets",
+      icon: IconWallet,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
+      title: "Transaksi",
+      url: "/dashboard#transactions",
+      icon: IconArrowsExchange2,
     },
     {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
+      title: "Budgeting",
+      url: "/dashboard#budgets",
+      icon: IconTargetArrow,
     },
     {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
+      title: "Laporan",
+      url: "/dashboard#reports",
+      icon: IconChartPie,
     },
   ],
   navClouds: [
     {
-      title: "Capture",
-      icon: IconCamera,
+      title: "Pengaturan Budget",
+      icon: IconTargetArrow,
       isActive: true,
+      url: "/dashboard#budgets",
+      items: [
+        {
+          title: "Semua Budget",
+          url: "/dashboard#budgets",
+        },
+        {
+          title: "Tambah Budget",
+          url: "/dashboard#budgets",
+        },
+      ],
+    },
+    {
+      title: "Templates",
+      icon: IconFileDollar,
       url: "#",
       items: [
         {
-          title: "Active Proposals",
+          title: "Import CSV",
           url: "#",
         },
         {
-          title: "Archived",
+          title: "Ekspor Bulanan",
           url: "#",
         },
       ],
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
+      title: "Insight",
+      icon: IconReportAnalytics,
+      url: "/dashboard#reports",
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "Grafik Tren",
+          url: "/dashboard#reports",
         },
         {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
+          title: "Riwayat PDF",
           url: "#",
         },
       ],
@@ -113,53 +109,46 @@ const staticData = {
   ],
   navSecondary: [
     {
-      title: "Settings",
+      title: "Pengaturan",
       url: "#",
       icon: IconSettings,
     },
     {
-      title: "Get Help",
+      title: "Pusat Bantuan",
       url: "#",
       icon: IconHelp,
     },
     {
-      title: "Search",
+      title: "Pencarian",
       url: "#",
       icon: IconSearch,
+    },
+    {
+      title: "Tips Finansial",
+      url: "#",
+      icon: IconNews,
     },
   ],
   documents: [
     {
-      name: "Data Library",
+      name: "Panduan Budget",
       url: "#",
-      icon: IconDatabase,
+      icon: IconTargetArrow,
     },
     {
-      name: "Reports",
+      name: "Template CSV",
       url: "#",
-      icon: IconReport,
+      icon: IconFileDollar,
     },
     {
-      name: "Word Assistant",
+      name: "Laporan Pajak",
       url: "#",
-      icon: IconFileWord,
+      icon: IconReportAnalytics,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: session } = useSession()
-  
-  const userData = session?.user ? {
-    name: session.user.name || "User",
-    email: session.user.email,
-    avatar: session.user.image || "/codeguide-logo.png",
-  } : {
-    name: "Guest",
-    email: "guest@example.com", 
-    avatar: "/codeguide-logo.png",
-  }
-
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -183,7 +172,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={staticData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )

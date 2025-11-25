@@ -1,8 +1,7 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { signOut } from "@/lib/auth-client"
+import Link from "next/link"
+import { useClerk, useUser } from "@clerk/nextjs"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -32,34 +31,47 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar()
-  const router = useRouter()
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { user, isLoaded, isSignedIn } = useUser()
+  const { signOut } = useClerk()
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true)
-    try {
-      await signOut()
-      router.push("/")
-    } catch (error) {
-      console.error("Sign out error:", error)
-    } finally {
-      setIsSigningOut(false)
-    }
+  const name = user?.fullName ?? "Guest"
+  const email = user?.primaryEmailAddress?.emailAddress ?? "guest@example.com"
+  const initials =
+    user?.fullName?.split(" ").map((n) => n[0]).join("").toUpperCase() ??
+    email[0]?.toUpperCase() ??
+    "G"
+
+  if (!isLoaded) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div className="flex items-center gap-2 px-4 py-3">
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-muted" />
+            <div className="flex-1 space-y-1">
+              <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-32 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
   }
 
-  const userInitials = user.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase()
-    : user.email[0].toUpperCase()
+  if (!isSignedIn || !user) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <Link href="/sign-in" className="justify-center gap-2 font-semibold">
+              Masuk untuk menyimpan data
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
 
   return (
     <SidebarMenu>
@@ -71,13 +83,13 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                <AvatarImage src={user.imageUrl} alt={name} />
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{name}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {user.email}
+                  {email}
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -92,13 +104,13 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                  <AvatarImage src={user.imageUrl} alt={name} />
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{name}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
+                    {email}
                   </span>
                 </div>
               </div>
@@ -119,9 +131,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} disabled={isSigningOut}>
+            <DropdownMenuItem onClick={() => signOut()}>
               <IconLogout />
-              {isSigningOut ? "Signing out..." : "Log out"}
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

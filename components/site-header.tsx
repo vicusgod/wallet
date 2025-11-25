@@ -1,6 +1,11 @@
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Badge } from "@/components/ui/badge"
+
+const monthLabel = new Intl.DateTimeFormat("id-ID", {
+  month: "long",
+  year: "numeric",
+}).format(new Date())
 
 export function SiteHeader() {
   return (
@@ -11,7 +16,12 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">Dashboard</h1>
+        <div className="flex flex-col">
+          <span className="text-base font-semibold">DompetKu Dashboard</span>
+          <Badge variant="outline" className="mt-1 w-fit text-xs font-normal">
+            Periode {monthLabel}
+          </Badge>
+        </div>
       </div>
     </header>
   )

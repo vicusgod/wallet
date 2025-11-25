@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { LogIn, LogOut, User, UserPlus } from "lucide-react";
-import { useSession, signOut } from "@/lib/auth-client";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,21 +14,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AuthButtons() {
-  const { data: session, isPending } = useSession();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { user, isLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Sign out error:", error);
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
-
-  if (isPending) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center gap-2">
         <div className="h-8 w-16 animate-pulse rounded bg-muted" />
@@ -38,22 +26,18 @@ export function AuthButtons() {
     );
   }
 
-  if (session?.user) {
-    const user = session.user;
-    const initials = user.name
-      ? user.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-      : user.email?.[0]?.toUpperCase() || "U";
+  if (isSignedIn && user) {
+    const initials =
+      user.fullName?.split(" ").map((n) => n[0]).join("")?.toUpperCase() ||
+      user.primaryEmailAddress?.emailAddress?.[0]?.toUpperCase() ||
+      "U";
 
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
+              <AvatarImage src={user.imageUrl} alt={user.fullName ?? "User"} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </Button>
@@ -61,12 +45,10 @@ export function AuthButtons() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <div className="flex items-center justify-start gap-2 p-2">
             <div className="flex flex-col space-y-1 leading-none">
-              {user.name && (
-                <p className="font-medium">{user.name}</p>
-              )}
-              {user.email && (
+              {user.fullName && <p className="font-medium">{user.fullName}</p>}
+              {user.primaryEmailAddress && (
                 <p className="w-[200px] truncate text-sm text-muted-foreground">
-                  {user.email}
+                  {user.primaryEmailAddress.emailAddress}
                 </p>
               )}
             </div>
@@ -80,11 +62,10 @@ export function AuthButtons() {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={handleSignOut}
-            disabled={isSigningOut}
+            onClick={() => signOut()}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            {isSigningOut ? "Signing out..." : "Sign out"}
+            Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -111,9 +92,9 @@ export function AuthButtons() {
 
 // Simplified version for hero section
 export function HeroAuthButtons() {
-  const { data: session, isPending } = useSession();
+  const { isLoaded, isSignedIn } = useUser();
 
-  if (isPending) {
+  if (!isLoaded) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <div className="h-12 w-32 animate-pulse rounded-lg bg-muted" />
@@ -122,7 +103,7 @@ export function HeroAuthButtons() {
     );
   }
 
-  if (session?.user) {
+  if (isSignedIn) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button asChild size="lg" className="text-base px-8 py-3">
