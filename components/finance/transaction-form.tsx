@@ -39,11 +39,7 @@ const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
   walletId: z.string().min(1, "Pilih dompet"),
   categoryId: z.string().min(1, "Pilih kategori"),
-  amount: z
-    .number({
-      required_error: "Masukkan nominal",
-    })
-    .positive("Nominal harus lebih dari 0"),
+  amount: z.number({ message: "Masukkan nominal" }).positive("Nominal harus lebih dari 0"),
   date: z.string().min(1, "Pilih tanggal"),
   description: z.string().max(160).optional(),
 })

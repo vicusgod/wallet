@@ -42,9 +42,10 @@ const walletSchema = z.object({
   type: z.enum(["cash", "bank", "savings"]),
   balance: z
     .number({
-      required_error: "Masukkan saldo awal",
+      message: "Masukkan saldo awal",
     })
     .nonnegative("Saldo tidak boleh negatif"),
+
   description: z.string().max(120, "Deskripsi maksimal 120 karakter").optional(),
 })
 

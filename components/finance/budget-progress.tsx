@@ -74,10 +74,10 @@ const budgetSchema = z.object({
   walletId: z.string().min(1, "Pilih dompet"),
   categoryId: z.string().min(1, "Pilih kategori pengeluaran"),
   amountLimit: z
-    .number({
-      required_error: "Masukkan batas budget",
-    })
-    .positive("Budget harus lebih dari 0"),
+      .number({
+        message: "Masukkan batas budget",
+      })
+      .positive("Budget harus lebih dari 0"),
   month: z
     .number()
     .min(1)

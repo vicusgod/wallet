@@ -10,7 +10,6 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
 
 import { user } from "@/db/schema/auth"
 
@@ -91,9 +90,7 @@ export const budgets = pgTable(
       .references(() => categories.id, { onDelete: "cascade" })
       .notNull(),
     amountLimit: numeric("amount_limit", { precision: 15, scale: 2 }).notNull(),
-    month: integer("month")
-      .notNull()
-      .check(sql`month >= 1 AND month <= 12`),
+    month: integer("month").notNull(),
     year: integer("year").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
