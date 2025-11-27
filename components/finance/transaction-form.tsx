@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { IconArrowDownRight, IconArrowUpRight, IconCalendarCheck } from "@tabler/icons-react"
@@ -39,7 +39,7 @@ const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
   walletId: z.string().min(1, "Pilih dompet"),
   categoryId: z.string().min(1, "Pilih kategori"),
-  amount: z.number({ message: "Masukkan nominal" }).positive("Nominal harus lebih dari 0"),
+  amount: z.coerce.number({ message: "Masukkan nominal" }).positive("Nominal harus lebih dari 0"),
   date: z.string().min(1, "Pilih tanggal"),
   description: z.string().max(160).optional(),
 })
@@ -69,12 +69,12 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const form = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(transactionSchema) as Resolver<TransactionFormValues>,
     defaultValues: {
       type: defaultValues?.type ?? "expense",
       walletId: defaultValues?.walletId ?? wallets[0]?.id ?? "",
       categoryId: defaultValues?.categoryId ?? categories.find((cat) => cat.type === (defaultValues?.type ?? "expense"))?.id ?? "",
-      amount: defaultValues?.amount ?? 0,
+      amount: defaultValues?.amount,
       date: defaultValues?.date ?? today,
       description: defaultValues?.description ?? "",
     },
@@ -123,7 +123,7 @@ export function TransactionForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <FormField
                 control={form.control}
                 name="type"
@@ -164,11 +164,12 @@ export function TransactionForm({
                   <FormControl>
                     <Input
                       type="number"
-                      min={0}
-                      step={5000}
                       placeholder="0"
                       {...field}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) => {
+                        const val = event.target.value
+                        field.onChange(val === "" ? undefined : Number(val))
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -265,15 +266,15 @@ export function TransactionForm({
               )}
             />
             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 flex-wrap items-center gap-2">
                 <Badge variant="outline">{selectedType === "income" ? "Pemasukan" : "Pengeluaran"}</Badge>
                 <span>
                   Nilai positif akan {selectedType === "income" ? "menambah" : "mengurangi"} saldo dompet
                 </span>
               </div>
-              <span>{wallet?.currency ?? "IDR"}</span>
+              <span className="whitespace-nowrap">{wallet?.currency ?? "IDR"}</span>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               {onCancel && (
                 <Button type="button" variant="ghost" onClick={onCancel}>
                   Batal

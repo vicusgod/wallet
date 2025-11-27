@@ -148,12 +148,15 @@ const isUUID = (value?: string) =>
 const getBalanceEffect = (type: Transaction["type"], amount: number) =>
   type === "income" ? amount : -amount
 
-export default function DashboardPage() {
+type SectionName = "dashboard" | "wallets" | "transactions" | "budgets" | "reports"
+
+export default function DashboardPage({ forceSection }: { forceSection?: SectionName } = {}) {
   const { user } = useUser()
   const [wallets, setWallets] = useState<Wallet[]>(initialWallets)
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
   const [budgets, setBudgets] = useState<Budget[]>(initialBudgets)
+  const [isLoadingData, setIsLoadingData] = useState(false)
   const [filters, setFilters] = useState<{ walletId: string; categoryId: string; period: FilterPeriod }>({
     walletId: "all",
     categoryId: "all",
@@ -163,26 +166,15 @@ export default function DashboardPage() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const userId = user?.id
   const supabaseReady = isSupabaseConfigured && Boolean(userId)
-  const defaultCategories = useMemo(
-    () => initialCategories.filter((category) => category.isDefault),
-    [],
-  )
-
-  const ensureDefaultCategoriesInSupabase = useCallback(
-    async (userIdParam: string) => {
-      await Promise.all(
-        defaultCategories.map((category) =>
-          supabaseInsertCategory(userIdParam, {
-            name: category.name,
-            emoji: category.emoji,
-            type: category.type,
-            is_default: true,
-          }),
-        ),
-      )
-    },
-    [defaultCategories],
-  )
+  useEffect(() => {
+    // Hilangkan data dummy ketika Supabase siap supaya UI tidak sempat menampilkan seed local.
+    if (supabaseReady) {
+      setWallets([])
+      setCategories([])
+      setTransactions([])
+      setBudgets([])
+    }
+  }, [supabaseReady])
 
   const currentDate = useMemo(() => new Date(), [])
   const currentMonthNumber = currentDate.getMonth() + 1
@@ -367,6 +359,7 @@ const syncSupabaseData = useCallback(async () => {
       return
     }
     try {
+      setIsLoadingData(true)
       const fetchEntity = async <T,>(
         promise: Promise<T>,
         label: string,
@@ -383,19 +376,17 @@ const syncSupabaseData = useCallback(async () => {
         }
       }
 
-      const walletRows = await fetchEntity(fetchSupabaseWallets(userId), "dompet")
-      let categoryRows = await fetchEntity(fetchSupabaseCategories(userId), "kategori")
-      if (categoryRows && categoryRows.length === 0 && defaultCategories.length > 0) {
-        await ensureDefaultCategoriesInSupabase(userId)
-        categoryRows = await fetchEntity(fetchSupabaseCategories(userId), "kategori")
-      }
-      const transactionRows = await fetchEntity(
-        fetchSupabaseTransactions(userId),
-        "transaksi",
-      )
-      const budgetRows = await fetchEntity(fetchSupabaseBudgets(userId), "budget", {
+      const budgetsPromise = fetchEntity(fetchSupabaseBudgets(userId), "budget", {
         optional: true,
       })
+
+      const [walletRows, categoryRows, transactionRows] = await Promise.all([
+        fetchEntity(fetchSupabaseWallets(userId), "dompet"),
+        fetchEntity(fetchSupabaseCategories(userId), "kategori"),
+        fetchEntity(fetchSupabaseTransactions(userId), "transaksi"),
+      ])
+
+      const budgetRows = await budgetsPromise
       if (walletRows) {
         setWallets(walletRows.map(mapWalletRecord))
       }
@@ -412,14 +403,58 @@ const syncSupabaseData = useCallback(async () => {
       console.error("Supabase sync error", error)
       toast.error("Gagal memuat data dari Supabase")
     } finally {
+      setIsLoadingData(false)
     }
-  }, [supabaseReady, userId, defaultCategories, ensureDefaultCategoriesInSupabase])
+  }, [supabaseReady, userId])
 
   useEffect(() => {
     if (supabaseReady) {
       syncSupabaseData()
     }
   }, [supabaseReady, syncSupabaseData])
+
+  const renderLoadingState = () => (
+    <div className="space-y-6 p-4 md:p-6 animate-pulse">
+      <div className="grid gap-4 md:grid-cols-3">
+        {[...Array(3)].map((_, idx) => (
+          <div key={idx} className="rounded-2xl border border-border/50 bg-card p-4">
+            <div className="h-4 w-24 rounded bg-muted" />
+            <div className="mt-4 h-8 w-32 rounded bg-muted" />
+            <div className="mt-3 h-3 w-20 rounded bg-muted" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-2xl border border-border/50 bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-28 rounded bg-muted" />
+            <div className="h-8 w-24 rounded bg-muted" />
+          </div>
+          <div className="mt-4 space-y-3">
+            {[...Array(4)].map((_, idx) => (
+              <div key={idx} className="h-14 rounded-xl bg-muted/60" />
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border/50 bg-card p-4">
+          <div className="h-4 w-24 rounded bg-muted" />
+          <div className="mt-4 space-y-3">
+            {[...Array(3)].map((_, idx) => (
+              <div key={idx} className="h-10 rounded-lg bg-muted/60" />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-border/50 bg-card p-4">
+        <div className="h-4 w-32 rounded bg-muted" />
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {[...Array(6)].map((_, idx) => (
+            <div key={idx} className="h-10 rounded-lg bg-muted/60" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 
   const handleAddWallet = async (wallet: NewWalletPayload) => {
     if (supabaseReady && userId) {
@@ -808,6 +843,197 @@ const syncSupabaseData = useCallback(async () => {
         percentage: monthlyExpense > 0 ? (expenseBreakdown[0].value / monthlyExpense) * 100 : 0,
       }
     : undefined
+
+  const activeSection: SectionName = forceSection ?? "dashboard"
+
+  if (isLoadingData) {
+    return renderLoadingState()
+  }
+
+  if (activeSection !== "dashboard") {
+    return (
+      <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
+        {activeSection === "wallets" && (
+          <div className="px-4 lg:px-6 space-y-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-semibold">Dompet</h2>
+              <p className="text-sm text-muted-foreground">Kelola semua dompet dan tambahkan saldo awal.</p>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <WalletList wallets={wallets} onAddWallet={handleAddWallet} />
+            </div>
+          </div>
+        )}
+
+        {activeSection === "transactions" && (
+          <div className="grid gap-6 px-4 pb-12 lg:px-6">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-semibold">Transaksi</h2>
+              <p className="text-sm text-muted-foreground">Catat pemasukan/pengeluaran dan kelola riwayat transaksi.</p>
+            </div>
+            <TransactionForm
+              wallets={wallets}
+              categories={categories}
+              onSubmit={handleCreateTransaction}
+              submitLabel="Simpan Transaksi"
+            />
+
+            <section id="transactions" className="grid gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Filter Transaksi</CardTitle>
+                  <CardDescription>Pilih dompet, kategori, atau periode</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Dompet</p>
+                    <Select
+                      value={filters.walletId}
+                      onValueChange={(value) => setFilters((prev) => ({ ...prev, walletId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih dompet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Semua dompet</SelectItem>
+                        {wallets.map((wallet) => (
+                          <SelectItem key={wallet.id} value={wallet.id}>
+                            {wallet.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Kategori</p>
+                    <Select
+                      value={filters.categoryId}
+                      onValueChange={(value) => setFilters((prev) => ({ ...prev, categoryId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih kategori" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Semua kategori</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Periode</p>
+                    <Select
+                      value={filters.period}
+                      onValueChange={(value: FilterPeriod) =>
+                        setFilters((prev) => ({ ...prev, period: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Periode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="this-month">Bulan ini</SelectItem>
+                        <SelectItem value="last-month">Bulan lalu</SelectItem>
+                        <SelectItem value="90-days">90 hari terakhir</SelectItem>
+                        <SelectItem value="all">Semua waktu</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() =>
+                        setFilters({
+                          walletId: "all",
+                          categoryId: "all",
+                          period: "this-month",
+                        })
+                      }
+                    >
+                      Reset Filter
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <TransactionTable
+                transactions={filteredTransactions}
+                walletsById={walletsById}
+                categoriesById={categoriesById}
+                onDelete={handleDeleteTransaction}
+                onEdit={(transaction) => {
+                  setEditingTransaction(transaction)
+                  setIsEditDialogOpen(true)
+                }}
+              />
+            </section>
+          </div>
+        )}
+
+        {activeSection === "budgets" && (
+          <section id="budgets" className="grid gap-6 px-4 pb-12 lg:px-6">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-semibold">Budgeting</h2>
+              <p className="text-sm text-muted-foreground">Pantau batas pengeluaran per kategori dan dompet.</p>
+            </div>
+            <BudgetProgress
+              budgets={budgetsWithProgress}
+              wallets={wallets}
+              categories={categories}
+              onAddBudget={handleAddBudget}
+              monthLabel={monthLabel}
+            />
+          </section>
+        )}
+
+        {activeSection === "reports" && (
+          <section id="reports" className="grid gap-6 px-4 pb-12 lg:px-6 lg:grid-cols-2">
+            <div className="lg:col-span-2 flex flex-col gap-1">
+              <h2 className="text-xl font-semibold">Laporan</h2>
+              <p className="text-sm text-muted-foreground">Lihat komposisi pengeluaran dan tren pemasukan/pengeluaran.</p>
+            </div>
+            <SpendingPie data={spendingPieData} totalExpense={monthlyExpense} />
+            <IncomeExpenseChart data={incomeExpenseData} />
+          </section>
+        )}
+
+        <Dialog
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open)
+            if (!open) {
+              setEditingTransaction(null)
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Transaksi</DialogTitle>
+            </DialogHeader>
+            {editingTransaction && (
+              <TransactionForm
+                key={editingTransaction.id}
+                wallets={wallets}
+                categories={categories}
+                defaultValues={editingTransaction}
+                onSubmit={handleUpdateTransaction}
+                submitLabel="Update Transaksi"
+                onCancel={() => {
+                  setEditingTransaction(null)
+                  setIsEditDialogOpen(false)
+                }}
+                isEditing
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    )
+  }
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">

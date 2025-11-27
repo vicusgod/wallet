@@ -9,9 +9,8 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  boolean,
 } from "drizzle-orm/pg-core"
-
-import { user } from "@/db/schema/auth"
 
 export const categoryTypeEnum = pgEnum("category_type", ["income", "expense"])
 
@@ -19,14 +18,14 @@ export const wallets = pgTable(
   "wallets",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id")
-      .references(() => user.id, { onDelete: "cascade" })
-      .notNull(),
+    userId: text("user_id").notNull(),
     name: varchar("name", { length: 100 }).notNull(),
     currency: varchar("currency", { length: 5 }).notNull().default("IDR"),
     balance: numeric("balance", { precision: 15, scale: 2 })
       .notNull()
       .default("0"),
+    type: varchar("type", { length: 50 }).notNull().default("cash"),
+    description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -43,11 +42,11 @@ export const categories = pgTable(
   "categories",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id").references(() => user.id, {
-      onDelete: "cascade",
-    }),
+    userId: text("user_id"),
     name: varchar("name", { length: 100 }).notNull(),
     type: categoryTypeEnum("type").notNull().default("expense"),
+    emoji: text("emoji"),
+    isDefault: boolean("is_default").default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -63,6 +62,7 @@ export const categories = pgTable(
 
 export const transactions = pgTable("transactions", {
   id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
   walletId: uuid("wallet_id")
     .references(() => wallets.id, { onDelete: "cascade" })
     .notNull(),
@@ -71,6 +71,7 @@ export const transactions = pgTable("transactions", {
   }),
   amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
   description: text("description"),
+  type: categoryTypeEnum("type").notNull().default("expense"),
   transactionDate: timestamp("transaction_date", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -83,6 +84,7 @@ export const budgets = pgTable(
   "budgets",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
     walletId: uuid("wallet_id")
       .references(() => wallets.id, { onDelete: "cascade" })
       .notNull(),
@@ -104,24 +106,4 @@ export const budgets = pgTable(
       table.year,
     ),
   }),
-)
-
-export const transactionsWalletIndex = index(
-  "transactions_wallet_idx",
-).on(transactions.walletId)
-
-export const transactionsCategoryIndex = index(
-  "transactions_category_idx",
-).on(transactions.categoryId)
-
-export const transactionsDateIndex = index("transactions_date_idx").on(
-  transactions.transactionDate,
-)
-
-export const budgetsWalletPeriodIndex = index(
-  "budgets_wallet_period_idx",
-).on(budgets.walletId, budgets.month, budgets.year)
-
-export const categoriesUserIndex = index("categories_user_idx").on(
-  categories.userId,
 )

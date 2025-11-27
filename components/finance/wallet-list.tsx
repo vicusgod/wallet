@@ -95,14 +95,14 @@ export function WalletList({ wallets, onAddWallet }: WalletListProps) {
 
   return (
     <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle>Dompet Aktif</CardTitle>
           <CardDescription>Atur dompet pribadi, tabungan, dan usaha Anda</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
+            <Button size="sm" className="w-full gap-1 sm:w-auto">
               <IconPlus className="size-4" />
               Dompet
             </Button>
@@ -243,8 +243,7 @@ export function WalletList({ wallets, onAddWallet }: WalletListProps) {
                     {wallet.description || "Belum ada catatan khusus"}
                   </p>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>ID: {wallet.id}</span>
+                <div className="mt-3 flex items-center justify-end text-xs text-muted-foreground">
                   <span>{wallet.currency}</span>
                 </div>
               </div>

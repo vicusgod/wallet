@@ -35,27 +35,27 @@ const staticData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
       title: "Dompet",
-      url: "/dashboard#wallets",
+      url: "/wallets",
       icon: IconWallet,
     },
     {
       title: "Transaksi",
-      url: "/dashboard#transactions",
+      url: "/transactions",
       icon: IconArrowsExchange2,
     },
     {
       title: "Budgeting",
-      url: "/dashboard#budgets",
+      url: "/budgets",
       icon: IconTargetArrow,
     },
     {
       title: "Laporan",
-      url: "/dashboard#reports",
+      url: "/reports",
       icon: IconChartPie,
     },
   ],
@@ -64,15 +64,15 @@ const staticData = {
       title: "Pengaturan Budget",
       icon: IconTargetArrow,
       isActive: true,
-      url: "/dashboard#budgets",
+      url: "/budgets",
       items: [
         {
           title: "Semua Budget",
-          url: "/dashboard#budgets",
+          url: "/budgets",
         },
         {
           title: "Tambah Budget",
-          url: "/dashboard#budgets",
+          url: "/budgets",
         },
       ],
     },
@@ -159,8 +159,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link href="/">
-                <Image src="/codeguide-logo.png" alt="CodeGuide" width={32} height={32} className="rounded-lg" />
-                <span className="text-base font-semibold font-parkinsans">CodeGuide</span>
+                <Image src="/binuswallet-logo.svg" alt="BinusWallet" width={32} height={32} className="rounded-lg" />
+                <span className="text-base font-semibold font-parkinsans">BinusWallet</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

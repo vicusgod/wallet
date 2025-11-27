@@ -59,27 +59,12 @@ export function SpendingPie({ data, totalExpense }: SpendingPieProps) {
         <CardDescription>Menunjukkan persentase tiap kategori bulan ini</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-sm"
-        >
+        <ChartContainer config={chartConfig} className="mx-auto aspect-square w-full max-w-sm">
           <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={60}
-              strokeWidth={5}
-            >
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
               {data.map((item) => (
-                <Cell
-                  key={item.categoryId}
-                  fill={`var(--color-${item.categoryId})`}
-                />
+                <Cell key={item.categoryId} fill={`var(--color-${item.categoryId})`} />
               ))}
             </Pie>
           </PieChart>
@@ -87,32 +72,28 @@ export function SpendingPie({ data, totalExpense }: SpendingPieProps) {
         <div className="space-y-3 rounded-xl border p-4">
           <div>
             <p className="text-sm text-muted-foreground">Total pengeluaran</p>
-            <p className="text-2xl font-semibold">
-              {formatCurrency(totalExpense)}
-            </p>
+            <p className="text-2xl font-semibold">{formatCurrency(totalExpense)}</p>
           </div>
           <div className="space-y-2">
             {data.map((item, index) => {
-              const percentage = totalExpense
-                ? Math.round((item.value / totalExpense) * 100)
-                : 0
+              const percentage = totalExpense ? Math.round((item.value / totalExpense) * 100) : 0
               return (
                 <div
                   key={item.categoryId}
-                  className="flex items-center justify-between text-sm"
+                  className="rounded-xl border border-border/60 bg-card/50 px-3 py-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="size-3 rounded-full"
-                      style={{
-                        backgroundColor: defaultColors[index % defaultColors.length],
-                      }}
-                    />
-                    <span>{item.name}</span>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <span
+                        className="size-3 rounded-full"
+                        style={{ backgroundColor: defaultColors[index % defaultColors.length] }}
+                      />
+                      <span className="truncate">{item.name}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground font-medium">
+                      {percentage}% · {formatCurrency(item.value)}
+                    </div>
                   </div>
-                  <span className="font-medium">
-                    {percentage}% · {formatCurrency(item.value)}
-                  </span>
                 </div>
               )
             })}

@@ -9,19 +9,13 @@ const monthLabel = new Intl.DateTimeFormat("id-ID", {
 
 export function SiteHeader() {
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4"
-        />
-        <div className="flex flex-col">
-          <span className="text-base font-semibold">DompetKu Dashboard</span>
-          <Badge variant="outline" className="mt-1 w-fit text-xs font-normal">
-            Periode {monthLabel}
-          </Badge>
-        </div>
+    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+      <div className="flex w-full items-center gap-2 px-4 lg:gap-3 lg:px-6">
+        <SidebarTrigger className="-ml-1 rounded-full border bg-card text-muted-foreground hover:text-foreground" />
+        <Separator orientation="vertical" className="mx-2 hidden sm:block data-[orientation=vertical]:h-5" />
+        <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 text-xs font-medium text-primary px-3 py-1 shadow-sm">
+          Periode {monthLabel}
+        </Badge>
       </div>
     </header>
   )
